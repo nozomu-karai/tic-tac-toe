@@ -78,15 +78,15 @@ impl Board {
 
 
 enum Player {
-    RandomPlayer,
-    BetterPlayer {player: i8},
+    Random(RandomPlayer),
+    Better(BetterPlayer),
 }
 
 impl Player {
     fn play(&self, board: &mut Board) {
         match self {
-            Player::RandomPlayer => 0,
-            Player::BetterPlayer { player } => player,
+            Player::Random(random) => random.play(board),
+            Player::Better(better) => better.play(board),
         }    
     }
 }
@@ -121,6 +121,7 @@ impl BetterPlayer {
         for idx in &moves {
             board.r#move(*idx as usize);
             if board.is_win(&self.player) {
+                println!("少し賢いプレイヤー: {}", idx);
                 return
             }
             board.unmove(*idx as usize)
@@ -136,7 +137,7 @@ impl BetterPlayer {
 
 fn main() {
     let mut board = Board::new();
-    let players: [Player; 2] = [Player::BetterPlayer { player: 0 }, Player::RandomPlayer];
+    let players: [Player; 2] = [Player::Better(BetterPlayer::new(0)), Player::Random(RandomPlayer)];
     let mut player: i8 = 0;
     loop {
         let p = &players[player as usize];
