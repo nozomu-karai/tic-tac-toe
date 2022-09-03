@@ -78,12 +78,21 @@ impl Board {
 
 
 enum Player {
-    RandomPlayer = RandomPlayer {},
-    BetterPlayer = BetterPlayer {},
+    RandomPlayer,
+    BetterPlayer {player: i8},
+}
+
+impl Player {
+    fn play(&self, board: &mut Board) {
+        match self {
+            Player::RandomPlayer => 0,
+            Player::BetterPlayer { player } => player,
+        }    
+    }
 }
 
 
-struct RandomPlayer {}
+struct RandomPlayer;
 
 impl RandomPlayer {
     fn play(&self, board: &mut Board) {
@@ -127,7 +136,7 @@ impl BetterPlayer {
 
 fn main() {
     let mut board = Board::new();
-    let players: [Player; 2] = [Player::BetterPlayer, Player::RandomPlayer];
+    let players: [Player; 2] = [Player::BetterPlayer { player: 0 }, Player::RandomPlayer];
     let mut player: i8 = 0;
     loop {
         let p = &players[player as usize];
