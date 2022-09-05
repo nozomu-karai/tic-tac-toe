@@ -1,4 +1,5 @@
 use std::io;
+use std::io::{stdout, Write};
 use std::collections::HashMap;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
@@ -213,7 +214,8 @@ struct HumanPlayer;
 impl HumanPlayer {
     fn play(&self, board: &mut Board) {
         loop {
-            println!("0-8の数字を入力してください: ");
+            print!("0-8の数字を入力してください: ");
+            stdout().flush().unwrap();
             let mut input = String::new();
             io::stdin()
                 .read_line(&mut input)
