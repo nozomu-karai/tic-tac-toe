@@ -1,3 +1,4 @@
+use std::io;
 use std::collections::HashMap;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
@@ -32,14 +33,15 @@ impl Board {
         println!("{}", text);
     }
 
-    fn r#move(&mut self, idx: usize) {
+    fn r#move(&mut self, idx: usize) -> bool {
         if self.state[idx] != -1 {
-            println!("invalid move!");
-            return;
+            println!("[Warning] すでに打たれています");
+            return false;
         } 
         let player: i8 = (self.counter % 2) as i8;
         self.state[idx] = player;
         self.counter += 1;
+        true
     }
 
     fn unmove(&mut self, idx: usize) {
@@ -80,6 +82,8 @@ impl Board {
 enum Player {
     Random(RandomPlayer),
     Better(BetterPlayer),
+    Best(BestPlayer),
+    Human(HumanPlayer),
 }
 
 impl Player {
@@ -87,6 +91,8 @@ impl Player {
         match self {
             Player::Random(random) => random.play(board),
             Player::Better(better) => better.play(board),
+            Player::Best(best) => best.play(board),
+            Player::Human(human) => human.play(board),
         }    
     }
 }
@@ -135,9 +141,107 @@ impl BetterPlayer {
 }
 
 
+fn minimax(board: &mut Board, player: &i8) -> (f64, Option<i8>) {
+    let maximize_player: i8 = 0;
+    let minimize_player: i8 = 1;
+
+    if board.is_win(&maximize_player) {
+        return (1., None);
+    }
+    else if board.is_win(&minimize_player) {
+        return (-1., None);
+    }
+    else if board.is_end() {
+        return (0., None);
+    }
+    
+    let opp: i8 = if *player == maximize_player { 1 } else { 0 };
+
+    if *player == maximize_player {
+        let mut max_score: f64 = -std::f64::INFINITY;
+        let mut max_idx: Option<i8> = None;
+
+        for idx in &board.valid_moves() {
+            board.r#move(*idx as usize);
+            let (score, _next_idx) = minimax(board, &opp);
+            if max_score < score {
+                max_score = score;
+                max_idx = Some(*idx);
+            }
+            board.unmove(*idx as usize);
+        }
+        return (max_score, max_idx);
+    }
+    else {
+        let mut min_score: f64 = std::f64::INFINITY;
+        let mut min_idx: Option<i8> = None;
+
+        for idx in &board.valid_moves() {
+            board.r#move(*idx as usize);
+            let (score, _next_idx) = minimax(board, &opp);
+            if min_score > score {
+                min_score = score;
+                min_idx = Some(*idx);
+            }
+            board.unmove(*idx as usize);
+        }
+        return (min_score, min_idx);
+    }
+        
+}
+
+
+struct BestPlayer {
+    player: i8
+}
+
+impl BestPlayer {
+    fn new(player: i8) -> Self {
+        Self { player }
+    }
+
+    fn play(&self, board: &mut Board) {
+        let (_, idx) = minimax(board, &self.player);
+        println!("最強のAI : {}", idx.unwrap());
+        board.r#move(idx.unwrap() as usize);
+    }
+}
+
+
+struct HumanPlayer;
+
+impl HumanPlayer {
+    fn play(&self, board: &mut Board) {
+        loop {
+            println!("0-8の数字を入力してください: ");
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("[Warning] 適切な値を入力してください");
+            let input: i8 = match input.trim().parse() {
+                Ok(num) => num,
+                Err(_) => {
+                    println!("[Warning] 適切な値を入力してください");
+                    continue;
+                }
+            };
+            if input < 0 || input > 8 {
+                println!("[Warning] 0-8の数字を入力してください");
+                continue;
+            }
+            if board.r#move(input as usize) {
+                break;
+            } else {
+                continue;
+            }
+        }
+    }
+}
+
+
 fn main() {
     let mut board = Board::new();
-    let players: [Player; 2] = [Player::Better(BetterPlayer::new(0)), Player::Random(RandomPlayer)];
+    let players: [Player; 2] = [Player::Best(BestPlayer::new(0)), Player::Human(HumanPlayer)];
     let mut player: i8 = 0;
     loop {
         let p = &players[player as usize];
@@ -153,9 +257,6 @@ fn main() {
             break;
         }
 
-        player = {
-            if player ==0 { 1 }
-            else { 0 }
-        };
+        player = if player ==0 { 1 } else { 0 };
     }
 }
