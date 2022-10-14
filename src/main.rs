@@ -80,6 +80,7 @@ impl Board {
 }
 
 
+#[allow(dead_code)]
 enum Player {
     Random(RandomPlayer),
     Better(BetterPlayer),
@@ -117,6 +118,7 @@ struct BetterPlayer {
 }
 
 impl BetterPlayer {
+    #[allow(dead_code)]
     fn new (player: i8) -> Self {
         Self { player }
     }
@@ -197,6 +199,7 @@ struct BestPlayer {
 }
 
 impl BestPlayer {
+    #[allow(dead_code)]
     fn new(player: i8) -> Self {
         Self { player }
     }
